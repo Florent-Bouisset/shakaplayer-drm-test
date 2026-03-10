@@ -1,0 +1,32 @@
+/**
+ * Copyright 2015 CANAL+ Group
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import config from "../config";
+import EnvDetector from "./env_detector";
+/**
+ * Returns true if the current target require the MediaKeySystemAccess to be
+ * renewed on each content.
+ * @returns {Boolean}
+ */
+export default function shouldRenewMediaKeySystemAccess(keySystem) {
+    const { FORCE_SHOULD_RENEW_MEDIA_KEY_SYSTEM_ACCESS } = config.getCurrent();
+    if (FORCE_SHOULD_RENEW_MEDIA_KEY_SYSTEM_ACCESS) {
+        return true;
+    }
+    return (keySystem.indexOf("playready") !== -1 &&
+        (EnvDetector.browser === EnvDetector.BROWSERS.Ie11 ||
+            EnvDetector.browser === EnvDetector.BROWSERS.EdgeChromium ||
+            EnvDetector.browser === EnvDetector.BROWSERS.Firefox));
+}

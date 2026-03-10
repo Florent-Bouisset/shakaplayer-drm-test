@@ -1,0 +1,186 @@
+"use strict";
+/**
+ * Copyright 2015 CANAL+ Group
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.emitSeekEvents = emitSeekEvents;
+exports.emitPlayPauseEvents = emitPlayPauseEvents;
+exports.constructPlayerStateReference = constructPlayerStateReference;
+exports.getLoadedContentState = getLoadedContentState;
+exports.isLoadedState = isLoadedState;
+var can_preload_before_play_1 = require("../../compat/can_preload_before_play");
+var config_1 = require("../../config");
+var array_includes_1 = require("../../utils/array_includes");
+var is_null_or_undefined_1 = require("../../utils/is_null_or_undefined");
+var reference_1 = require("../../utils/reference");
+/**
+ * @param {Object} playbackObserver - Observes playback conditions on
+ * `mediaElement`.
+ * @param {function} onSeeking - Callback called when a seeking operation starts
+ * on `mediaElement`.
+ * @param {function} onSeeked - Callback called when a seeking operation ends
+ * on `mediaElement`.
+ * @param {Object} cancelSignal - When triggered, stop calling callbacks and
+ * remove all listeners this function has registered.
+ */
+function emitSeekEvents(playbackObserver, onSeeking, onSeeked, cancelSignal) {
+    if (cancelSignal.isCancelled()) {
+        return;
+    }
+    var wasSeeking = playbackObserver.getReference().getValue().seeking === 2 /* SeekingState.External */;
+    if (wasSeeking) {
+        onSeeking();
+        if (cancelSignal.isCancelled()) {
+            return;
+        }
+    }
+    playbackObserver.listen(function (obs) {
+        if (obs.event === "seeking") {
+            wasSeeking = true;
+            onSeeking();
+        }
+        else if (wasSeeking && obs.event === "seeked") {
+            wasSeeking = false;
+            onSeeked();
+        }
+    }, { includeLastObservation: true, clearSignal: cancelSignal });
+}
+/**
+ * @param {HTMLMediaElement} mediaElement
+ * @param {function} onPlay - Callback called when a play operation has started
+ * on `mediaElement`.
+ * @param {function} onPause - Callback called when a pause operation has
+ * started on `mediaElement`.
+ * @param {Object} cancelSignal - When triggered, stop calling callbacks and
+ * remove all listeners this function has registered.
+ */
+function emitPlayPauseEvents(mediaElement, onPlay, onPause, cancelSignal) {
+    if (cancelSignal.isCancelled() || mediaElement === null) {
+        return;
+    }
+    mediaElement.addEventListener("play", onPlay);
+    mediaElement.addEventListener("pause", onPause);
+    cancelSignal.register(function () {
+        mediaElement.removeEventListener("play", onPlay);
+        mediaElement.removeEventListener("pause", onPause);
+    });
+}
+function constructPlayerStateReference(initializer, mediaElement, playbackObserver, isDirectFile, cancelSignal) {
+    var playerStateRef = new reference_1.default("LOADING" /* PLAYER_STATES.LOADING */, cancelSignal);
+    initializer.addEventListener("loaded", function () {
+        if (playerStateRef.getValue() === "LOADING" /* PLAYER_STATES.LOADING */) {
+            playerStateRef.setValue("LOADED" /* PLAYER_STATES.LOADED */);
+            if (!cancelSignal.isCancelled()) {
+                var newState = getLoadedContentState(mediaElement, null, isDirectFile, playerStateRef.getValue());
+                if (newState !== "PAUSED" /* PLAYER_STATES.PAUSED */) {
+                    playerStateRef.setValue(newState);
+                }
+            }
+        }
+        else if (playerStateRef.getValue() === "RELOADING" /* PLAYER_STATES.RELOADING */) {
+            playerStateRef.setValue(getLoadedContentState(mediaElement, null, isDirectFile, playerStateRef.getValue()));
+        }
+        else {
+            updateStateIfLoaded(null);
+        }
+    }, cancelSignal);
+    initializer.addEventListener("reloadingMediaSource", function () {
+        if (isLoadedState(playerStateRef.getValue())) {
+            playerStateRef.setValueIfChanged("RELOADING" /* PLAYER_STATES.RELOADING */);
+        }
+    }, cancelSignal);
+    /**
+     * Keep track of the last known stalling situation.
+     * `null` if playback is not stalled.
+     */
+    var prevStallReason = null;
+    initializer.addEventListener("stalled", function (s) {
+        if (s !== prevStallReason) {
+            updateStateIfLoaded(s);
+            prevStallReason = s;
+        }
+    }, cancelSignal);
+    initializer.addEventListener("unstalled", function () {
+        if (prevStallReason !== null) {
+            updateStateIfLoaded(null);
+            prevStallReason = null;
+        }
+    }, cancelSignal);
+    playbackObserver.listen(function (observation) {
+        if ((0, array_includes_1.default)(["seeking", "ended", "play", "pause"], observation.event)) {
+            updateStateIfLoaded(prevStallReason);
+        }
+    }, { clearSignal: cancelSignal });
+    return playerStateRef;
+    function updateStateIfLoaded(stallRes) {
+        if (!isLoadedState(playerStateRef.getValue())) {
+            return;
+        }
+        var newState = getLoadedContentState(mediaElement, stallRes, isDirectFile, playerStateRef.getValue());
+        var prevState = playerStateRef.getValue();
+        // Some safety checks to avoid having nonsense state switches
+        if (prevState === "LOADED" /* PLAYER_STATES.LOADED */ && newState === "PAUSED" /* PLAYER_STATES.PAUSED */) {
+            return;
+        }
+        playerStateRef.setValueIfChanged(newState);
+    }
+}
+/**
+ * Get state string for a _loaded_ content.
+ * @param {HTMLMediaElement} mediaElement
+ * @param {Object} stalledStatus - Current stalled state:
+ *   - null when not stalled
+ *   - a description of the situation if stalled.
+ * @returns {string}
+ */
+function getLoadedContentState(mediaElement, stalledStatus, isDirectFile, previousState) {
+    var FORCED_ENDED_THRESHOLD = config_1.default.getCurrent().FORCED_ENDED_THRESHOLD;
+    if (mediaElement.ended) {
+        return "ENDED" /* PLAYER_STATES.ENDED */;
+    }
+    if (stalledStatus !== null) {
+        // On some old browsers (e.g. Chrome 54), the browser does not
+        // emit an 'ended' event in some conditions. Detect if we
+        // reached the end by comparing the current position and the
+        // duration instead.
+        var gapBetweenDurationAndCurrentTime = Math.abs(mediaElement.duration - mediaElement.currentTime);
+        if (!(0, is_null_or_undefined_1.default)(FORCED_ENDED_THRESHOLD) &&
+            gapBetweenDurationAndCurrentTime < FORCED_ENDED_THRESHOLD) {
+            return "ENDED" /* PLAYER_STATES.ENDED */;
+        }
+        if (stalledStatus === "seeking") {
+            return "SEEKING" /* PLAYER_STATES.SEEKING */;
+        }
+        if (stalledStatus === "freezing") {
+            return "FREEZING" /* PLAYER_STATES.FREEZING */;
+        }
+        if (previousState === "LOADED" /* PLAYER_STATES.LOADED */ && !(0, can_preload_before_play_1.default)(isDirectFile)) {
+            /**
+             * On devices that do not support preloading, a data buffer cannot be constructed.
+             * Normally, this situation would trigger the BUFFERING state. However, since these devices
+             * are unable to buffer data, having low or no data is expected while waiting for a play() call.
+             * Therefore, in this case, we remain in the LOADED state instead of transitioning to BUFFERING.
+             */
+            return "LOADED" /* PLAYER_STATES.LOADED */;
+        }
+        return "BUFFERING" /* PLAYER_STATES.BUFFERING */;
+    }
+    return mediaElement.paused ? "PAUSED" /* PLAYER_STATES.PAUSED */ : "PLAYING" /* PLAYER_STATES.PLAYING */;
+}
+function isLoadedState(state) {
+    return (state !== "LOADING" /* PLAYER_STATES.LOADING */ &&
+        state !== "RELOADING" /* PLAYER_STATES.RELOADING */ &&
+        state !== "STOPPED" /* PLAYER_STATES.STOPPED */);
+}

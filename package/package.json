@@ -1,0 +1,301 @@
+{
+  "name": "rx-player",
+  "author": "Canal+",
+  "version": "4.4.0",
+  "description": "Canal+ HTML5 Video Player",
+  "main": "./dist/commonjs/index.js",
+  "module": "./dist/es2017/index.js",
+  "browser": "./dist/es2017/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/es2017/index.js",
+      "require": "./dist/commonjs/index.js",
+      "default": "./dist/es2017/index.js"
+    },
+    "./experimental": {
+      "import": "./dist/es2017/experimental/index.js",
+      "require": "./dist/commonjs/experimental/index.js",
+      "default": "./dist/es2017/experimental/index.js"
+    },
+    "./experimental/config": {
+      "import": "./dist/es2017/config.js",
+      "require": "./dist/commonjs/config.js",
+      "default": "./dist/es2017/config.js"
+    },
+    "./experimental/features": {
+      "import": "./dist/es2017/experimental/features/index.js",
+      "require": "./dist/commonjs/experimental/features/index.js",
+      "default": "./dist/es2017/experimental/features/index.js"
+    },
+    "./experimental/features/embeds": {
+      "import": "./dist/es2017/__GENERATED_CODE/index.js",
+      "require": "./dist/commonjs/__GENERATED_CODE/index.js",
+      "default": "./dist/es2017/__GENERATED_CODE/index.js"
+    },
+    "./experimental/features/*": {
+      "import": "./dist/es2017/experimental/features/*.js",
+      "require": "./dist/commonjs/experimental/features/*.js",
+      "default": "./dist/es2017/experimental/features/*.js"
+    },
+    "./experimental/tools": {
+      "import": "./dist/es2017/experimental/tools/index.js",
+      "require": "./dist/commonjs/experimental/tools/index.js",
+      "default": "./dist/es2017/experimental/tools/index.js"
+    },
+    "./experimental/tools/*": {
+      "import": "./dist/es2017/experimental/tools/*/index.js",
+      "require": "./dist/commonjs/experimental/tools/*/index.js",
+      "default": "./dist/es2017/experimental/tools/*/index.js"
+    },
+    "./features": {
+      "import": "./dist/es2017/features/list/index.js",
+      "require": "./dist/commonjs/features/list/index.js",
+      "default": "./dist/es2017/features/list/index.js"
+    },
+    "./features/*": {
+      "import": "./dist/es2017/features/list/*.js",
+      "require": "./dist/commonjs/features/list/*.js",
+      "default": "./dist/es2017/features/list/*.js"
+    },
+    "./logger": {
+      "import": "./dist/es2017/log.js",
+      "require": "./dist/commonjs/log.js",
+      "default": "./dist/es2017/log.js"
+    },
+    "./minimal": {
+      "import": "./dist/es2017/minimal.js",
+      "require": "./dist/commonjs/minimal.js",
+      "default": "./dist/es2017/minimal.js"
+    },
+    "./tools": {
+      "import": "./dist/es2017/tools/index.js",
+      "require": "./dist/commonjs/tools/index.js",
+      "default": "./dist/es2017/tools/index.js"
+    },
+    "./tools/*": {
+      "import": "./dist/es2017/tools/*/index.js",
+      "require": "./dist/commonjs/tools/*/index.js",
+      "default": "./dist/es2017/tools/*/index.js"
+    },
+    "./types": {
+      "import": "./dist/es2017/public_types.js",
+      "require": "./dist/commonjs/public_types.js",
+      "default": "./dist/es2017/public_types.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "experimental": [
+        "./dist/es2017/experimental/index.d.ts"
+      ],
+      "experimental/features": [
+        "./dist/es2017/experimental/features/index.d.ts"
+      ],
+      "experimental/features/embeds": [
+        "./dist/es2017/__GENERATED_CODE/index.d.ts"
+      ],
+      "experimental/features/*": [
+        "./dist/es2017/experimental/features/*.d.ts"
+      ],
+      "experimental/tools": [
+        "./dist/es2017/experimental/tools/index.d.ts"
+      ],
+      "experimental/tools/*": [
+        "./dist/es2017/experimental/tools/*/index.d.ts"
+      ],
+      "features": [
+        "./dist/es2017/features/list/index.d.ts"
+      ],
+      "features/*": [
+        "./dist/es2017/features/list/*.d.ts"
+      ],
+      "logger": [
+        "./dist/es2017/log.d.ts"
+      ],
+      "minimal": [
+        "./dist/es2017/minimal.d.ts"
+      ],
+      "tools": [
+        "./dist/es2017/tools/index.d.ts"
+      ],
+      "tools/*": [
+        "./dist/es2017/tools/*/index.d.ts"
+      ],
+      "types": [
+        "./dist/es2017/public_types.d.ts"
+      ]
+    }
+  },
+  "keywords": [
+    "dash",
+    "eme",
+    "hss",
+    "html5",
+    "mediasource",
+    "mse",
+    "reactive",
+    "smooth",
+    "streaming",
+    "typescript",
+    "video"
+  ],
+  "homepage": "https://github.com/canalplus/rx-player",
+  "bugs": "https://github.com/canalplus/rx-player/issues",
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ./scripts/generate_build.mjs",
+    "build:all": "bash ./scripts/make_all_builds.sh",
+    "build:wasm:debug": "mkdir -p dist && cd ./src/parsers/manifest/dash/wasm-parser && cargo build --target wasm32-unknown-unknown && cp target/wasm32-unknown-unknown/debug/mpd_node_parser.wasm ../../../../../dist/mpd-parser.wasm",
+    "build:wasm:release": "bash ./scripts/build_wasm_release.sh",
+    "bundle": "node ./scripts/run_bundler.mjs src/index.ts --production-mode --globals --name \"RxPlayer default bundle\" -o dist/rx-player.js",
+    "bundle:min": "node ./scripts/run_bundler.mjs src/index.ts --production-mode --globals --name \"RxPlayer minified bundle\" -o dist/rx-player.min.js --minify",
+    "certificate": "bash ./scripts/generate_certificate.sh",
+    "check": "npm run check:types && npm run lint && npm run check:types:unit_tests",
+    "check:all": "npm run check:types && npm run lint && npm run lint:demo && npm run lint:tests && npm run lint:scripts",
+    "check:demo": "npm run check:demo:types && npm run lint:demo",
+    "check:demo:types": "tsc --noEmit --project demo/",
+    "clean:build": "node ./scripts/utils/remove_dir.mjs dist",
+    "check:types": "tsc --noEmit --project .",
+    "check:types:unit_tests": "tsc --noEmit --project ./tsconfig.unit-tests.json",
+    "check:types:watch": "tsc --noEmit --watch --project .",
+    "demo": "node ./scripts/build_demo.mjs --production-mode",
+    "doc": "readme.doc --clean --input doc/ --output doc/generated -p \"$(cat VERSION)\"",
+    "fmt:prettier": "prettier --write .",
+    "fmt:prettier:check": "prettier . --check",
+    "fmt:rust": "cd ./src/parsers/manifest/dash/wasm-parser && cargo fmt",
+    "fmt:rust:check": "cd ./src/parsers/manifest/dash/wasm-parser && cargo fmt --check",
+    "lint": "eslint src -c eslint.config.mjs",
+    "lint:all": "npm run lint && npm run lint:demo && npm run lint:scripts && npm run lint:tests",
+    "lint:demo": "eslint -c demo/eslint.config.mjs demo/scripts",
+    "lint:scripts": "eslint -c scripts/eslint.config.mjs --ext .js --ext .mjs --ext .cjs scripts",
+    "lint:tests": "eslint -c tests/eslint.config.mjs tests",
+    "list": "node scripts/list-npm-scripts.mjs",
+    "prepublishOnly": "bash ./scripts/make_all_builds.sh",
+    "releases:changelog": "node ./scripts/update_changelog.mjs",
+    "releases:demo": "bash ./scripts/update_gh-pages_demo.sh",
+    "releases:dev": "bash ./scripts/make-dev-releases.sh",
+    "releases:doc": "bash ./scripts/update_gh-pages_doc.sh",
+    "releases:official": "bash ./scripts/make-official-release.sh",
+    "start": "node ./scripts/start_demo_web_server.mjs",
+    "test:integration": "npm run test:integration:chrome && npm run test:integration:firefox",
+    "test:integration:chrome": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=chrome vitest run tests/integration/scenarios",
+    "test:integration:chrome:watch": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=chrome vitest watch tests/integration/scenarios",
+    "test:integration:edge": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=edge vitest run tests/integration/scenarios",
+    "test:integration:edge:watch": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=edge vitest watch tests/integration/scenarios",
+    "test:integration:firefox": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=firefox vitest run tests/integration/scenarios",
+    "test:integration:firefox:watch": "npm run --silent test:integration:notice && cross-env BROWSER_CONFIG=firefox vitest watch tests/integration/scenarios",
+    "test:integration:notice": "echo \"~~~ ⚠️ NOTICE ⚠️\n~~~ Integration tests rely on the RxPlayer build.\n~~~ Make sure you called the \\`build\\` script succesfully first.\n\"",
+    "test:memory": "cross-env BROWSER_CONFIG=chrome vitest run tests/memory",
+    "test:memory:chrome:watch": "cross-env BROWSER_CONFIG=chrome vitest watch tests/memory",
+    "test:unit": "vitest --config vitest.config.unit.mjs",
+    "test:unit:watch": "vitest --config vitest.config.unit.mjs --watch",
+    "update-version": "bash ./scripts/update-version-number.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/canalplus/rx-player.git"
+  },
+  "devDependencies": {
+    "@canalplus/readme.doc": "0.6.0",
+    "@eslint/js": "^9.33.0",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.7",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "@vitest/browser": "^3.2.4",
+    "core-js": "3.45.0",
+    "cross-env": "^10.0.0",
+    "esbuild": "0.25.9",
+    "eslint": "9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-ban": "2.0.0",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-jsdoc": "54.1.0",
+    "eslint-plugin-react": "7.37.5",
+    "github-buttons": "2.29.1",
+    "html-entities": "2.6.0",
+    "jsdom": "^26.1.0",
+    "prettier": "^3.6.2",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "regenerator-runtime": "0.14.1",
+    "semver": "7.7.2",
+    "typescript": "5.9.2",
+    "typescript-eslint": "^8.40.0",
+    "vitest": "3.2.4",
+    "webdriverio": "^9.19.1"
+  },
+  "scripts-list": {
+    " INFO ": "---- This field is read by the `list` npm script and allows to guide you through the RxPlayer's npm scripts ----",
+    "Build a demo page (e.g. to test a code change)": {
+      "start": "Build the demo with the non-minified RxPlayer and serve it on a local server. Re-build on file updates.\nUse `--help` option (`-- --help` when using `npm run`) to list options.",
+      "demo": "Build the demo in demo/bundle.js.\nUse `--help` option (`-- --help` when using `npm run`) to list options.",
+      "check:demo": "Check the validity of the demo directory by running the type checker and linter on it",
+      "check:demo:types": "Check TypeScript types in demo files",
+      "lint:demo": "Run linter on demo files",
+      "certificate": "Generate a certificate to be able to use HTTPS locally for the demo pages (`npm run start` will then listen to HTTPS requests through a communicated port)",
+      "releases:demo": "Publish current demo as the GitHub's pages new demo page (\"stable\" branch only)"
+    },
+    "Type-check, format, or lint the current code": {
+      "check": "Check the validity of the src directory by running the type checker and linter on it",
+      "check:all": "Check the validity of the whole project by running linters and type checkers on all project directories",
+      "fmt:prettier": "Automatically format JavaScript, TypeScript, JSON, XML, HTML, YML and Markdown files",
+      "fmt:prettier:check": "Check that JavaScript, TypeScript, JSON, XML, HTML, YML and Markdown files are well-formatted",
+      "fmt:rust": "Automatically format Rust files",
+      "fmt:rust:check": "Check that Rust files are well-formatted",
+      "check:types": "Check TypeScript typings in src",
+      "check:types:watch": "Check TypeScript typings in src each time files change",
+      "lint": "Lint rx-player source files",
+      "lint:all": "Lint all RxPlayer JS files, including scripts, demo, integration tests etc.",
+      "lint:demo": "Lint demo source files",
+      "lint:scripts": "Lint our JS scripts in the scripts/ directory",
+      "lint:tests": "Lint integration tests source files"
+    },
+    "Run tests": {
+      "Integration tests (test the whole API, call the `build` script BEFORE running them)": {
+        "test:integration": "Launch integration tests in multiple browser environments",
+        "test:integration:chrome": "Launch integration tests in a Chrome browser.",
+        "test:integration:chrome:watch": "Launch integration tests in Chrome each times the files update",
+        "test:integration:firefox": "Launch integration tests in a Firefox browser.",
+        "test:integration:firefox:watch": "Launch integration tests in Firefox each times the files update",
+        "test:integration:edge": "Launch integration tests in an Edge browser.",
+        "test:integration:edge:watch": "Launch integration tests in Edge each times the files update"
+      },
+      "Unit tests (test particular functions)": {
+        "test:unit": "Launch unit tests",
+        "test:unit:watch": "Launch unit tests and restart them each one of its file changes"
+      },
+      "Memory tests (test memory usage to avoid memory leaks)": {
+        "test:memory": "Launch memory tests",
+        "test:memory:chrome:watch": "Launch memory tests in Chrome each times the files update"
+      }
+    },
+    "Build the player or one of its sub-parts": {
+      "Regular builds (used by JS bundlers)": {
+        "build": "Build the rx-player code in release mode. Use `--help` option (`-- --help` when using `npm run`) to list options.",
+        "build -- --dev-mode": "Build the rx-player code in development mode (more runtime checks, non-minified worker)"
+      },
+      "Legacy bundle builds (single-file bundles exporting to window.RxPlayer)": {
+        "bundle": "Build the player in dist/rx-player.js. Use `--help` option (`-- --help` when using `npm run`) to list options.",
+        "bundle:min": "Build the player and minify it in dist/rx-player.min.js."
+      },
+      "WebAssembly MPD parser builds (needs Rust, Cargo and binaryen)": {
+        "build:wasm:debug": "Build the DASH MPD parser written in rust as WebAssembly into debug mode, and output the result as dist/mpd-parser.wasm",
+        "build:wasm:release": "Build the DASH MPD parser written in rust as WebAssembly into release mode, and output the result as dist/mpd-parser.wasm"
+      },
+      "Combinations of multiple builds": {
+        "build:all": "Perform all possible builds of the player (regular RxPlayer builds, legacy bundles and the WebAssembly DASH MPD parser release build)."
+      }
+    },
+    "Build the documentation pages": {
+      "doc": "Generate the HTML documentation in doc/generated/pages",
+      "releases:doc": "Publish current documentation as the GitHub's pages new documentation pages (\"stable\" branch only)"
+    },
+    "Make a release": {
+      "releases:dev": "Trigger our CI to produce dev npm releases (which are tagged pre-releases on npm) from the current branch.",
+      "releases:official": "Trigger our CI to produce a new official release of the RxPlayer from the current branch."
+    }
+  }
+}

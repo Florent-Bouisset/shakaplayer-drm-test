@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RxPlayer – Widevine DRM</title>
+
+    <script type="module" src="./package/dist/rx-player.js"></script>
+
+    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/rx-player@4.4.1/dist/rx-player.js"></script> -->
+
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 16px;
+            margin: 20px;
+            background-color: #d8d8d8;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            display: block;
+            width: 100%;
+            max-width: 700px;
+            padding: 8px;
+            font-size: 15px;
+            border: 2px solid #888;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 10px 28px;
+            font-size: 16px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            background: #eee;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:active {
+            background: #ccc;
+        }
+
+        video {
+            display: block;
+            margin-top: 16px;
+            max-width: 100%;
+        }
+
+        pre#log {
+            margin-top: 12px;
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 8px;
+            max-height: 200px;
+            overflow: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Contenu DASH widevine
+https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine/dash.mpd
+
+licence: 
+https://cwip-shaka-proxy.appspot.com/no_auth
+
+key system: 
+com.widevine.alpha -->
+    <h2>RxPlayer – Widevine DRM</h2>
+
+    <div>
+        <label for="manifestUrl">Manifest url :</label><br>
+        <input id="manifestUrl" type="text" size="80"
+            value="https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine/dash.mpd" />
+    </div>
+
+    <br>
+
+    <div>
+        <label for="licenseUrl">License server URL : </label><br>
+        <input id="licenseUrl" type="text" value="https://cwip-shaka-proxy.appspot.com/no_auth" />
+    </div>
+
+    <br>
+
+    <button id="loadBtn">Load</button>
+    <button id="stopBtn">Stop</button>
+
+    <br>
+
+    <video id="video" width="854" height="480" controls></video>
+    <br>
+
+    <pre id="log" style="background:#f4f4f4;padding:8px;max-height:200px;overflow:auto;font-size:12px;"></pre>
+
+    <script type="module">
+        var logEl = document.getElementById('log');
+
+        function log(msg) {
+            var line = '[' + new Date().toISOString() + '] ' + msg;
+            console.log(line);
+            logEl.textContent += line + '\n';
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        var player = null;
+        var videoEl = document.getElementById('video');
+
+        async function initRxPlayer() {
+            RxPlayer.LogLevel = "DEBUG"
+            player = new RxPlayer({ videoElement: video });
+
+
+            player.addEventListener('error', function (event) {
+                onError(event.detail);
+            });
+
+            player.addEventListener('warning', function (warn) {
+                log('Warning – ' + (warn.type || '') + ' | code: ' + (warn.code || '') + (warn.message ? ' | ' + warn.message : ''));
+            });
+
+            player.addEventListener('playerStateChange', function (state) {
+                log('State → ' + state);
+            });
+
+            log('RxPlayer initialized');
+        }
+
+        async function loadStream() {
+            var manifestUrl = document.getElementById('manifestUrl').value;
+            var licenseUrl = document.getElementById('licenseUrl').value;
+
+            if (!manifestUrl) {
+                log('Error : no manifest url');
+                return;
+            }
+            if (!licenseUrl) {
+                log('Error : no license url');
+                return;
+            }
+
+
+            var loadVideoOptions = {
+                url: manifestUrl,
+                transport: 'dash',
+                keySystems: [{
+                    type: 'widevine',
+                    getLicense: function (challenge) {
+                        return fetch(licenseUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/octet-stream'
+                            },
+                            body: challenge
+                        }).then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('License server responded with HTTP ' + response.status);
+                            }
+                            return response.arrayBuffer();
+                        });
+                    }
+                }]
+            };
+
+            try {
+                await player.loadVideo(loadVideoOptions);
+                log('Content loaded');
+                videoEl.play();
+            } catch (e) {
+                onError(e);
+            }
+        }
+
+        async function stopStream() {
+            if (!player) return;
+            try {
+                await player.stop();
+                log('Content stopped');
+            } catch (e) {
+                onError(e);
+            }
+        }
+
+        function onError(error) {
+            var msg = 'Error – code: ' + error.code;
+            if (error.message) msg += ' | ' + error.message;
+            log(msg);
+            console.error(error);
+        }
+
+        document.getElementById('loadBtn').addEventListener('click', loadStream);
+        document.getElementById('stopBtn').addEventListener('click', stopStream);
+
+        initRxPlayer();
+    </script>
+
+</body>
+
+</html>

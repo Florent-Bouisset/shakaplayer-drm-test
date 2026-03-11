@@ -12277,6 +12277,12 @@
      * @param {Object} initializationData
      */
     onInitializationData(initializationData) {
+      if (window.toto) {
+        return;
+      } else {
+        window.toto = true;
+      }
+
       if (this._stateData.isInitDataQueueLocked !== false) {
         if (this._isStopped()) {
           throw new Error("ContentDecryptor either disposed or stopped.");

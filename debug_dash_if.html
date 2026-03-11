@@ -10,8 +10,9 @@
 
 
 
-    <script src="https://cdn.jsdelivr.net/npm/dashjs@4/dist/modern/esm/dash.all.debug.js"></script>
-
+    <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/dashjs/5.0.3/modern/esm/dash.all.min.js"
+        integrity="sha512-laAIVy8IDn/yJdAYRb8TB77DbrTYbkR2WVHefrRgGQjqUt2cVAGB861TDoHBvcnZWEG85yO/bZoKjzc7xQEToQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -96,7 +97,7 @@
 
     <pre id="log"></pre>
 
-    <script>
+    <script type="module">
 
         var logEl = document.getElementById('log');
 

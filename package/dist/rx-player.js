@@ -12308,6 +12308,11 @@
      */
     async _processInitializationData(initializationData, mediaKeysData) {
       var _a2, _b2, _c2;
+      if (window.duplicateInitData) {
+        return;
+      } else {
+        window.duplicateInitData = true;
+      }
       if (log_default.hasLevel("DEBUG")) {
         log_default.debug(
           "DRM",

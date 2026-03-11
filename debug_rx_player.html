@@ -163,7 +163,7 @@ com.widevine.alpha -->
                     distinctiveIdentifier: "not-allowed",
                     persistentState: "not-allowed",
                     videoCapabilitiesConfig: { type: "robustness", value: ["SW_SECURE_DECODE"] },
-                    videoCapabilitiesConfig: { type: "robustness", value: ["SW_SECURE_CRYPTO"] },
+                    audioCapabilitiesConfig: { type: "robustness", value: ["SW_SECURE_CRYPTO"] },
                     getLicense: function (challenge) {
                         return fetch(licenseUrl, {
                             method: 'POST',

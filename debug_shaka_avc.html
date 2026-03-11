@@ -7,6 +7,32 @@
     <title>Shaka Player – Widevine DRM</title>
 
 
+    <script>
+        (() => {
+            const original = navigator.requestMediaKeySystemAccess;
+
+            navigator.requestMediaKeySystemAccess = async function (...args) {
+                console.group("requestMediaKeySystemAccess called");
+                console.log("Arguments:", args);
+                console.log("Key System:", args[0]);
+                console.log("Configs:", args[1]);
+                console.log("Stack:", new Error().stack);
+                console.groupEnd();
+
+                try {
+                    const result = await original.apply(this, args);
+                    console.log("requestMediaKeySystemAccess result:", result);
+                    return result;
+                } catch (e) {
+                    console.error("requestMediaKeySystemAccess error:", e);
+                    throw e;
+                }
+            };
+
+            console.log("navigator.requestMediaKeySystemAccess patched");
+        })();
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.compiled.debug.min.js"
         integrity="sha512-hceUFXC44l6Y97sA/dh3YFROUtJvuku91F4TGOwCVoGiuJdfASLkvxcFqYg7944wyX4rpuy0dOYyLH09OyHMQw=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>

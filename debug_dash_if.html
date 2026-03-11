@@ -154,6 +154,18 @@
 
             player.setProtectionData(protectionData);
 
+            player.registerCustomCapabilitiesFilter(function (representation) {
+                if (representation.mimeType === "video/webm") {
+                    return false;
+                }
+
+                if (representation.codecs && representation.codecs.includes("vp09")) {
+                    return false;
+                }
+
+                return true;
+            });
+
             player.initialize(video, manifestUrl, true);
 
             log("Content loading...");

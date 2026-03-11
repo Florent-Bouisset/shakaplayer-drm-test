@@ -160,6 +160,8 @@ com.widevine.alpha -->
                 transport: 'dash',
                 keySystems: [{
                     type: 'widevine',
+                    distinctiveIdentifier: "not-allowed",
+                    persistentState: "not-allowed",
                     getLicense: function (challenge) {
                         return fetch(licenseUrl, {
                             method: 'POST',

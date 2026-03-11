@@ -9,7 +9,7 @@
 
     <script>
         (() => {
-            const original = navigator.requestMediaKeySystemAccess;
+            const originalRequest = navigator.requestMediaKeySystemAccess;
 
             navigator.requestMediaKeySystemAccess = async function (...args) {
                 console.group("requestMediaKeySystemAccess called");
@@ -20,7 +20,7 @@
                 console.groupEnd();
 
                 try {
-                    const result = await original.apply(this, args);
+                    const result = await originalRequest.apply(this, args);
                     console.log("requestMediaKeySystemAccess result:", result);
                     return result;
                 } catch (e) {
@@ -29,7 +29,29 @@
                 }
             };
 
-            console.log("navigator.requestMediaKeySystemAccess patched");
+            if (window.MediaKeys && MediaKeys.prototype.setServerCertificate) {
+                const originalSetServerCertificate = MediaKeys.prototype.setServerCertificate;
+
+                MediaKeys.prototype.setServerCertificate = async function (...args) {
+                    console.group("MediaKeys.setServerCertificate called");
+                    console.log("Arguments:", args);
+                    console.log("Certificate (ArrayBuffer):", args[0]);
+                    console.log("Certificate length:", args[0]?.byteLength);
+                    console.log("Stack:", new Error().stack);
+                    console.groupEnd();
+
+                    try {
+                        const result = await originalSetServerCertificate.apply(this, args);
+                        console.log("setServerCertificate result:", result);
+                        return result;
+                    } catch (e) {
+                        console.error("setServerCertificate error:", e);
+                        throw e;
+                    }
+                };
+            }
+
+            console.log("EME hooks installed (requestMediaKeySystemAccess + setServerCertificate)");
         })();
     </script>
 

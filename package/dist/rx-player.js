@@ -12277,10 +12277,9 @@
      * @param {Object} initializationData
      */
     onInitializationData(initializationData) {
-      if (window.toto) {
-        return;
-      } else {
+      if (!window.toto) {
         window.toto = true;
+        return;
       }
 
       if (this._stateData.isInitDataQueueLocked !== false) {

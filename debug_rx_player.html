@@ -1275,6 +1275,96 @@
         }));
 
         MSESpy.start()
+
+
+            (() => {
+                console.log("Installing global <video> prototype spy");
+
+                /* -------------------------
+                   Spy src property
+                ------------------------- */
+
+                const srcDesc = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, "src");
+
+                Object.defineProperty(HTMLMediaElement.prototype, "src", {
+                    get: function () {
+                        return srcDesc.get.call(this);
+                    },
+                    set: function (value) {
+                        console.group("VIDEO src set");
+                        console.log("element:", this);
+                        console.log("new src:", value);
+                        console.log("stack:", new Error().stack);
+                        console.groupEnd();
+                        return srcDesc.set.call(this, value);
+                    }
+                });
+
+                /* -------------------------
+                   Spy load()
+                ------------------------- */
+
+                const originalLoad = HTMLMediaElement.prototype.load;
+
+                HTMLMediaElement.prototype.load = function (...args) {
+                    console.group("VIDEO load() called");
+                    console.log("element:", this);
+                    console.log("currentSrc:", this.currentSrc);
+                    console.log("src:", this.src);
+                    console.log("stack:", new Error().stack);
+                    console.groupEnd();
+
+                    return originalLoad.apply(this, args);
+                };
+
+                /* -------------------------
+                   Spy appendChild for <source>
+                ------------------------- */
+
+                const originalAppendChild = HTMLMediaElement.prototype.appendChild;
+
+                HTMLMediaElement.prototype.appendChild = function (node) {
+                    if (node && node.tagName === "SOURCE") {
+                        console.group("SOURCE appended to VIDEO");
+                        console.log("video:", this);
+                        console.log("source src:", node.src || node.getAttribute("src"));
+                        console.log("source type:", node.type);
+                        console.log("stack:", new Error().stack);
+                        console.groupEnd();
+                    }
+
+                    return originalAppendChild.call(this, node);
+                };
+
+                /* -------------------------
+                   Spy setAttribute
+                ------------------------- */
+
+                const originalSetAttribute = Element.prototype.setAttribute;
+
+                Element.prototype.setAttribute = function (name, value) {
+                    if (this instanceof HTMLMediaElement && name === "src") {
+                        console.group("VIDEO setAttribute('src')");
+                        console.log("element:", this);
+                        console.log("value:", value);
+                        console.log("stack:", new Error().stack);
+                        console.groupEnd();
+                    }
+
+                    if (this.tagName === "SOURCE" && name === "src") {
+                        console.group("SOURCE src attribute set");
+                        console.log("source:", this);
+                        console.log("value:", value);
+                        console.log("parent video:", this.parentElement);
+                        console.log("stack:", new Error().stack);
+                        console.groupEnd();
+                    }
+
+                    return originalSetAttribute.call(this, name, value);
+                };
+
+            })();
+
     </script>
 
     <script type="module" src="./package/dist/rx-player.js"></script>

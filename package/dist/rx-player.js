@@ -24863,12 +24863,6 @@
             }
           },
           encryptionDataEncountered: (value) => {
-            if (window.duplicateInitData) {
-              return;
-            } else {
-              window.duplicateInitData = true;
-            }
-
             if (self2._decryptionCapabilities.status === "disabled") {
               self2._onFatalError(self2._decryptionCapabilities.value);
               return;

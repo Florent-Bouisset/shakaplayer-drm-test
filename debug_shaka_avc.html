@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaka Player – Widevine DRM</title>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.16.3/shaka-player.compiled.debug.min.js"
+        integrity="sha512-hceUFXC44l6Y97sA/dh3YFROUtJvuku91F4TGOwCVoGiuJdfASLkvxcFqYg7944wyX4rpuy0dOYyLH09OyHMQw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+    <style>
+        body {
+            font-family: sans-serif;
+            font-size: 16px;
+            margin: 20px;
+            background-color: #d8d8d8;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            display: block;
+            width: 100%;
+            max-width: 700px;
+            padding: 8px;
+            font-size: 15px;
+            border: 2px solid #888;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .field {
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 10px 28px;
+            font-size: 16px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            background: #eee;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        button:active {
+            background: #ccc;
+        }
+
+        video {
+            display: block;
+            margin-top: 16px;
+            max-width: 100%;
+        }
+
+        pre#log {
+            margin-top: 12px;
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 8px;
+            max-height: 200px;
+            overflow: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Contenu DASH widevine
+https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine/dash.mpd
+
+licence: 
+https://cwip-shaka-proxy.appspot.com/no_auth
+
+key system: 
+com.widevine.alpha -->
+    <h2>Shaka Player – Widevine DRM</h2>
+
+    <div>
+        <label for="manifestUrl">Manifest url :</label><br>
+        <input id="manifestUrl" type="text" size="80"
+            value="https://storage.googleapis.com/shaka-demo-assets/angel-one-widevine/dash.mpd" />
+    </div>
+
+    <br>
+
+    <div>
+        <label for="licenseUrl">License server URL : </label><br>
+        <input id="licenseUrl" type="text" value="https://cwip-shaka-proxy.appspot.com/no_auth" />
+    </div>
+
+    <br>
+
+    <button id="loadBtn">Load</button>
+    <button id="stopBtn">Stop</button>
+
+    <br>
+
+    <video id="video" width="854" height="480" controls></video>
+    <br>
+
+    <pre id="log" style="background:#f4f4f4;padding:8px;max-height:200px;overflow:auto;font-size:12px;"></pre>
+
+    <script>
+        var logEl = document.getElementById('log');
+
+        function log(msg) {
+            var line = '[' + new Date().toISOString() + '] ' + msg;
+            console.log(line);
+            logEl.textContent += line + '\n';
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        var player = null;
+        var videoEl = document.getElementById('video');
+
+        async function initShaka() {
+            shaka.polyfill.installAll();
+
+            // if (!shaka.Player.isBrowserSupported()) {
+            //   log('Shaka Player not supported');
+            //  return;
+            // }
+
+
+
+            player = new shaka.Player();
+            await player.attach(video);
+
+
+            shaka.log.setLevel(shaka.log.Level.DEBUG);
+            // prefer codecs that are widely supported
+
+
+            player.addEventListener('error', function (event) {
+                onError(event.detail);
+            });
+
+            log('Shaka Player initialized');
+        }
+
+        async function loadStream() {
+            var manifestUrl = document.getElementById('manifestUrl').value;
+            var licenseUrl = document.getElementById('licenseUrl').value;
+
+            if (!manifestUrl) {
+                log('Error : no manifest url');
+                return;
+            }
+            if (!licenseUrl) {
+                log('Error : no license url');
+                return;
+            }
+
+            try {
+                await player.unload();
+            } catch (e) { }
+
+            var drmConfig = {
+                servers: {
+                    'com.widevine.alpha': licenseUrl
+                }
+            };
+
+            player.configure({
+                preferredVideoCodecs: ["avc1", "avc"],
+                drm: drmConfig,
+                streaming: {
+                    retryParameters: {
+                        maxAttempts: 3,
+                        baseDelay: 1000,
+                        backoffFactor: 2,
+                        fuzzFactor: 0.5
+                    }
+                }
+            });
+
+            try {
+                await player.load(manifestUrl);
+                log('Content loaded');
+                videoEl.play();
+            } catch (e) {
+                onError(e);
+            }
+        }
+
+        async function stopStream() {
+            if (!player) return;
+            try {
+                await player.unload();
+                log('Content stopped');
+            } catch (e) {
+                onError(e);
+            }
+        }
+
+        function onError(error) {
+            var msg = 'Error – code: ' + error.code;
+            if (error.message) msg += ' | ' + error.message;
+            log(msg);
+            console.error(error);
+        }
+
+        document.getElementById('loadBtn').addEventListener('click', loadStream);
+        document.getElementById('stopBtn').addEventListener('click', stopStream);
+
+        initShaka().then(() => {
+            // browser policy might block autoplay
+            loadStream();
+        })
+    </script>
+
+</body>
+
+</html>

@@ -65,6 +65,7 @@ import isNullOrUndefined from "../../utils/is_null_or_undefined";
 import noop from "../../utils/noop";
 import objectAssign from "../../utils/object_assign";
 import type { IReadOnlySharedReference } from "../../utils/reference";
+import sleep from "../../utils/sleep";
 import type { ISyncOrAsyncValue } from "../../utils/sync_or_async";
 import SyncOrAsync from "../../utils/sync_or_async";
 import type { CancellationSignal } from "../../utils/task_canceller";
@@ -213,15 +214,16 @@ export default class MediaSourceContentInitializer extends ContentInitializer {
     );
 
     this._setupInitialMediaSourceAndDecryption(mediaElement)
-      .then((initResult) =>
-        this._onInitialMediaSourceReady(
+      .then(async (initResult) => {
+        await sleep(5000);
+        return this._onInitialMediaSourceReady(
           mediaElement,
           initResult.mediaSource,
           playbackObserver,
           initResult.drmSystemId,
           initResult.unlinkMediaSource,
-        ),
-      )
+        );
+      })
       .catch((err) => {
         this._onFatalError(err);
       });
@@ -328,6 +330,31 @@ export default class MediaSourceContentInitializer extends ContentInitializer {
       );
 
       if (contentDecryptor.enabled) {
+        this._manifest?.getValueAsAsync().then((manifest) => {
+          const edata =
+            manifest.periods[0].adaptations?.video?.[0]?.representations[0].getAllEncryptionData() ??
+            [];
+          if (edata.length > 0) {
+            edata.map((p) =>
+              contentDecryptor.value.onInitializationData(
+                objectAssign(
+                  {
+                    content: {
+                      manifest,
+                      period: manifest.periods[0],
+                      // @ts-ignore
+                      adaptation: manifest.periods[0].adaptations.video[0],
+                      representation:
+                        // @ts-ignore
+                        manifest.periods[0].adaptations.video[0].representations[0],
+                    },
+                  },
+                  p,
+                ),
+              ),
+            );
+          }
+        });
         this._decryptionCapabilities = {
           status: "enabled",
           value: contentDecryptor.value,

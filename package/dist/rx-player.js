@@ -8664,10 +8664,7 @@
       if (systemId !== void 0) {
         psshBoxes.push({ systemId, data: pssh });
       }
-      moov[psshOffsets[0] + 4] = 102;
-      moov[psshOffsets[0] + 5] = 114;
-      moov[psshOffsets[0] + 6] = 101;
-      moov[psshOffsets[0] + 7] = 101;
+
       i = psshOffsets[2];
     }
     return psshBoxes;

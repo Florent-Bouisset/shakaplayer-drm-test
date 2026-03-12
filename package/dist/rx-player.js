@@ -24154,7 +24154,7 @@
       );
       this._setupInitialMediaSourceAndDecryption(mediaElement)
         .then(async (initResult) => {
-          await sleep(5e3);
+          await sleep(10e3);
           return this._onInitialMediaSourceReady(
             mediaElement,
             initResult.mediaSource,

@@ -8664,7 +8664,6 @@
       if (systemId !== void 0) {
         psshBoxes.push({ systemId, data: pssh });
       }
-
       i = psshOffsets[2];
     }
     return psshBoxes;
@@ -22788,6 +22787,7 @@
         source.src = url;
         source.type = "";
         mediaElement.appendChild(source);
+        mediaElement.load();
         unlinkSignal.register(() => {
           resetMediaElement(mediaElement, url);
         });
@@ -24150,16 +24150,15 @@
         this._initCanceller.signal,
       );
       this._setupInitialMediaSourceAndDecryption(mediaElement)
-        .then(async (initResult) => {
-          await sleep(10e3);
-          return this._onInitialMediaSourceReady(
+        .then((initResult) =>
+          this._onInitialMediaSourceReady(
             mediaElement,
             initResult.mediaSource,
             playbackObserver,
             initResult.drmSystemId,
             initResult.unlinkMediaSource,
-          );
-        })
+          ),
+        )
         .catch((err) => {
           this._onFatalError(err);
         });
@@ -24201,7 +24200,6 @@
     _setupInitialMediaSourceAndDecryption(mediaElement) {
       const initCanceller = this._initCanceller;
       return createCancellablePromise(initCanceller.signal, (resolve) => {
-        var _a2;
         const { keySystems } = this._initSettings;
         const { statusRef: drmInitRef, contentDecryptor } = initializeContentDecryption(
           mediaElement,
@@ -24211,26 +24209,26 @@
             onError: (err) => this._onFatalError(err),
             onBlackListProtectionData: (val) => {
               (async () => {
-                var _a3;
+                var _a2;
                 if (this._manifest === null) {
                   return;
                 }
                 const manifest =
-                  (_a3 = this._manifest.syncValue) != null
-                    ? _a3
+                  (_a2 = this._manifest.syncValue) != null
+                    ? _a2
                     : await this._manifest.getValueAsAsync();
                 blackListProtectionDataOnManifest(manifest, val);
               })().catch(noop_default);
             },
             onKeyIdsCompatibilityUpdate: (updates) => {
               (async () => {
-                var _a3;
+                var _a2;
                 if (this._manifest === null) {
                   return;
                 }
                 const manifest =
-                  (_a3 = this._manifest.syncValue) != null
-                    ? _a3
+                  (_a2 = this._manifest.syncValue) != null
+                    ? _a2
                     : await this._manifest.getValueAsAsync();
                 updateKeyIdsDecipherabilityOnManifest(
                   manifest,
@@ -24241,9 +24239,9 @@
               })().catch(noop_default);
             },
             onCodecSupportUpdate: () => {
-              var _a3, _b2;
+              var _a2, _b2;
               const syncManifest =
-                (_a3 = this._manifest) == null ? void 0 : _a3.syncValue;
+                (_a2 = this._manifest) == null ? void 0 : _a2.syncValue;
               if (isNullOrUndefined(syncManifest)) {
                 (_b2 = this._manifest) == null
                   ? void 0
@@ -24261,44 +24259,6 @@
           initCanceller.signal,
         );
         if (contentDecryptor.enabled) {
-          (_a2 = this._manifest) == null
-            ? void 0
-            : _a2.getValueAsAsync().then((manifest) => {
-                var _a3, _b2, _c2, _d2;
-                const edata =
-                  (_d2 =
-                    (_c2 =
-                      (_b2 =
-                        (_a3 = manifest.periods[0].adaptations) == null
-                          ? void 0
-                          : _a3.video) == null
-                        ? void 0
-                        : _b2[0]) == null
-                      ? void 0
-                      : _c2.representations[0].getAllEncryptionData()) != null
-                    ? _d2
-                    : [];
-                if (edata.length > 0) {
-                  edata.map((p) =>
-                    contentDecryptor.value.onInitializationData(
-                      object_assign_default(
-                        {
-                          content: {
-                            manifest,
-                            period: manifest.periods[0],
-                            // @ts-ignore
-                            adaptation: manifest.periods[0].adaptations.video[0],
-                            representation:
-                              // @ts-ignore
-                              manifest.periods[0].adaptations.video[0].representations[0],
-                          },
-                        },
-                        p,
-                      ),
-                    ),
-                  );
-                }
-              });
           this._decryptionCapabilities = {
             status: "enabled",
             value: contentDecryptor.value,
